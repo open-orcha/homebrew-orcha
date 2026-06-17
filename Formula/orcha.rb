@@ -1,0 +1,48 @@
+class Orcha < Formula
+  include Language::Python::Virtualenv
+
+  desc "Human-authoritative multi-agent orchestration for Claude Code"
+  homepage "https://github.com/open-orcha/orcha"
+  # Public repo: fetched over HTTPS, no auth required. `revision` pins the exact
+  # commit (the git-source equivalent of a tarball sha256) so the build is
+  # reproducible and tamper-evident. Tag is `cli-vX.Y.Z` (the CLI's own tag
+  # namespace; the Mac app uses bare `vX.Y.Z` on this same repo).
+  url "https://github.com/open-orcha/orcha.git",
+      using:    :git,
+      tag:      "cli-v0.2.0",
+      revision: "a992c75bcf268567b931e25cfebfbc887c980baf"
+  version "0.2.0"
+  license "MIT"
+
+  depends_on "python@3.13"
+
+  # The CLI's single runtime dep, pinned. Bump together with the
+  # `dependencies` line in orcha-cli/pyproject.toml.
+  resource "websockets" do
+    url "https://files.pythonhosted.org/packages/04/24/4b2031d72e840ce4c1ccb255f693b15c334757fc50023e4db9537080b8c4/websockets-16.0.tar.gz"
+    sha256 "5f6261a5e56e8d5c42a4497b364ea24d94d9563e8fbd44e78ac40879c60179b5"
+  end
+
+  def install
+    venv = virtualenv_create(libexec, "python3.13")
+    venv.pip_install resources
+    venv.pip_install buildpath/"orcha-cli"
+    bin.install_symlink libexec/"bin/orcha"
+  end
+
+  def caveats
+    <<~EOS
+      Orcha drives per-project Docker stacks. Docker Desktop (or OrbStack/
+      Colima) must be installed and running before `orcha init`:
+        https://docs.docker.com/desktop/setup/install/mac-install/
+
+      Note: DB migrations are forward-only. Downgrading the CLI keeps the
+      newer (additive) schema; a true rollback is `orcha down -v` + re-init
+      (DESTRUCTIVE: wipes that project's data).
+    EOS
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/orcha --version")
+  end
+end

@@ -1,4 +1,4 @@
-class Orcha < Formula
+class OrchaAT030 < Formula
   include Language::Python::Virtualenv
 
   desc "Human-authoritative multi-agent orchestration for Claude Code"
@@ -15,6 +15,9 @@ class Orcha < Formula
   license "MIT"
 
   depends_on "python@3.13"
+
+  # A frozen downgrade target — can't coexist with the tracking formula.
+  conflicts_with "orcha", because: "both install an `orcha` binary"
 
   # The CLI's single runtime dep, pinned. Bump together with the
   # `dependencies` line in orcha-cli/pyproject.toml.
